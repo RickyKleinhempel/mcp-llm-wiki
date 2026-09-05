@@ -11,6 +11,7 @@ import {
   resolveInRoot,
   toRelPath,
 } from "../paths.js";
+import { escapeLike } from "../search/bm25.js";
 import {
   completeFrontmatter,
   composePage,
@@ -416,7 +417,7 @@ function planLinkRewrites(ctx: ServerContext, moves: { from: string; to: string 
         changed = true;
       }
     }
-    if (changed) rewrites.push({ relPath, content });
+    if (changed) rewrites.push({ relPath: sourceRel, content });
   }
   return rewrites;
 }
@@ -491,7 +492,7 @@ export function listPages(
         params.push(folder);
       } else {
         clauses.push("(f.folder = ? OR f.folder LIKE ? ESCAPE '\\')");
-        params.push(folder, `${folder.replace(/[\\%_]/g, "\\$&")}/%`);
+        params.push(folder, `${escapeLike(folder)}/%`);
       }
     }
   }
@@ -698,6 +699,10 @@ async function refreshIndex(ctx: ServerContext, relPath: string): Promise<void> 
     await ctx.indexer.indexSingle("wiki", relPath);
   } catch (error) {
     log.error("index refresh failed after write", { relPath, error: String(error) });
+    throw new ToolError(
+      "index-refresh-failed",
+      `${relPath} was written but the index could not be refreshed: ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
 }
 

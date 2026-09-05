@@ -55,6 +55,7 @@ export function registerIndexTools(server: McpServer, ctx: ServerContext): void 
             loaded: ctx.embedder.isLoaded,
             vectorTable: hasTable(ctx.db, "chunk_vec"),
           },
+          indexing: ctx.indexer.isRunning,
           counts: {
             wikiPages: count("SELECT COUNT(*) AS n FROM files WHERE layer = 'wiki'"),
             rawFiles: count("SELECT COUNT(*) AS n FROM files WHERE layer = 'raw'"),

@@ -1,10 +1,9 @@
 import fs from "node:fs";
-import path from "node:path";
 import type { Config } from "../config.js";
 import type { Db } from "../db/open.js";
 import { ensureVectorTable, hasTable, setMeta } from "../db/schema.js";
 import { log } from "../logger.js";
-import { depthOf, folderOf, baseNameWithoutMd } from "../paths.js";
+import { depthOf, folderOf, baseNameWithoutMd, normalizeRelPath, resolveInRoot } from "../paths.js";
 import { asStringArray, inferTitle, parsePage } from "../wiki/frontmatter.js";
 import { extractLinks, resolveAllLinks } from "../wiki/links.js";
 import { chunkMarkdown, type Chunk } from "./chunk.js";
@@ -39,7 +38,7 @@ interface PreparedFile {
 }
 
 export class Indexer {
-  private running: Promise<IndexResult> | undefined;
+  private running: Promise<unknown> | undefined;
 
   constructor(
     private readonly db: Db,
@@ -47,8 +46,13 @@ export class Indexer {
     private readonly embedder: Embedder,
   ) {}
 
-  /** Serialise reindex runs - concurrent writers would fight over the same rows. */
-  async reindex(options: { mode?: "full" | "incremental"; paths?: string[] } = {}): Promise<IndexResult> {
+  /** True while a reindex or single-file update is in flight. */
+  get isRunning(): boolean {
+    return this.running !== undefined;
+  }
+
+  /** Serialise reindex/indexSingle runs - concurrent writers would fight over the same rows. */
+  private async withLock<T>(fn: () => Promise<T>): Promise<T> {
     while (this.running) {
       try {
         await this.running;
@@ -56,11 +60,15 @@ export class Indexer {
         /* previous run failed; continue with this one */
       }
     }
-    const run = this.doReindex(options).finally(() => {
+    const run = fn().finally(() => {
       this.running = undefined;
     });
     this.running = run;
     return run;
+  }
+
+  async reindex(options: { mode?: "full" | "incremental"; paths?: string[] } = {}): Promise<IndexResult> {
+    return this.withLock(() => this.doReindex(options));
   }
 
   private async doReindex(options: { mode?: "full" | "incremental"; paths?: string[] }): Promise<IndexResult> {
@@ -105,8 +113,10 @@ export class Indexer {
       for (const [key, file] of known) {
         if (present.has(key)) continue;
         if (!scannedLayers.has(file.layer)) continue;
-        this.db.prepare("DELETE FROM files WHERE id = ?").run(file.id);
+        // FTS5/vec0 rows have no foreign key, so they must be dropped before the
+        // files row (and its chunk cascade) disappears from under them.
         this.deleteChunkArtifacts(file.id);
+        this.db.prepare("DELETE FROM files WHERE id = ?").run(file.id);
         removed++;
       }
     }
@@ -142,9 +152,21 @@ export class Indexer {
   ): { files: { layer: Layer; relPath: string; absPath: string; sha256: string }[]; layers: Layer[] } {
     if (mode === "paths") {
       const files: { layer: Layer; relPath: string; absPath: string; sha256: string }[] = [];
-      for (const relPath of explicitPaths) {
+      const limits = { maxDepth: this.config.maxDepth, maxRelPathLength: this.config.maxRelPathLength };
+      for (const relPathInput of explicitPaths) {
+        let relPath: string;
+        try {
+          relPath = normalizeRelPath(relPathInput, limits);
+        } catch {
+          continue;
+        }
         for (const layer of ["wiki", "raw"] as Layer[]) {
-          const absPath = path.join(this.rootFor(layer), relPath);
+          let absPath: string;
+          try {
+            absPath = resolveInRoot(this.rootFor(layer), relPath);
+          } catch {
+            continue;
+          }
           if (!fs.existsSync(absPath) || !fs.statSync(absPath).isFile()) continue;
           files.push({ layer, relPath, absPath, sha256: hashString(fs.readFileSync(absPath, "utf8")) });
           break;
@@ -349,8 +371,14 @@ export class Indexer {
   }
 
   /** Index (or refresh) exactly one file. */
-  async indexSingle(layer: Layer, relPath: string): Promise<boolean> {
-    const absPath = path.join(this.rootFor(layer), relPath);
+  async indexSingle(layer: Layer, relPathInput: string): Promise<boolean> {
+    return this.withLock(() => this.doIndexSingle(layer, relPathInput));
+  }
+
+  private async doIndexSingle(layer: Layer, relPathInput: string): Promise<boolean> {
+    const limits = { maxDepth: this.config.maxDepth, maxRelPathLength: this.config.maxRelPathLength };
+    const relPath = normalizeRelPath(relPathInput, limits);
+    const absPath = resolveInRoot(this.rootFor(layer), relPath);
     if (!fs.existsSync(absPath)) {
       return this.removeFile(layer, relPath);
     }

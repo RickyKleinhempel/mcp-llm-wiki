@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import type { ServerContext } from "../context.js";
+import { escapeLike } from "../search/bm25.js";
 import { CONFIDENCE_LEVELS, KEY_ORDER, PAGE_STATUSES, PAGE_TYPES } from "./frontmatter.js";
 import { isExternalTarget } from "./links.js";
 import { rawSourceExists } from "./pages.js";
@@ -67,7 +68,7 @@ export function lintWiki(ctx: ServerContext, options: LintOptions = {}): LintRep
   let where = "layer = 'wiki'";
   if (options.folder) {
     where += " AND (folder = ? OR folder LIKE ? ESCAPE '\\')";
-    params.push(options.folder, `${options.folder.replace(/[\\%_]/g, "\\$&")}/%`);
+    params.push(options.folder, `${escapeLike(options.folder)}/%`);
   }
 
   const files = ctx.db

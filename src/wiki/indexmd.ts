@@ -16,6 +16,7 @@ export interface UpdateIndexResult {
   relPath: string;
   pages: number;
   bytes: number;
+  truncated: boolean;
 }
 
 export async function updateIndex(
@@ -29,8 +30,9 @@ export async function updateIndex(
   const relPath = scope === "" ? "index.md" : `${scope}/index.md`;
   const absPath = resolveInRoot(ctx.config.wikiRoot, relPath);
 
-  const { pages } = listPages(ctx, { folder: scope, recursive: true, limit: 1000 });
+  const { pages, total } = listPages(ctx, { folder: scope, recursive: true, limit: 1000 });
   const listed = pages.filter((page) => page.relPath !== relPath && !isBookkeepingFile(page.relPath));
+  const truncated = total > pages.length;
 
   const groups = new Map<string, typeof listed>();
   for (const page of listed) {
@@ -43,6 +45,10 @@ export async function updateIndex(
   lines.push(scope === "" ? "# Index" : `# Index: ${scope}`);
   lines.push("");
   lines.push(`${listed.length} page(s), as of ${todayIso()}.`);
+  if (truncated) {
+    lines.push("");
+    lines.push(`_Truncated: ${total} pages match this scope, only the first ${pages.length} are listed._`);
+  }
   lines.push("");
 
   for (const folder of [...groups.keys()].sort()) {
@@ -82,7 +88,7 @@ export async function updateIndex(
   fs.writeFileSync(absPath, content, "utf8");
   await ctx.indexer.indexSingle("wiki", relPath);
 
-  return { relPath, pages: listed.length, bytes: Buffer.byteLength(content, "utf8") };
+  return { relPath, pages: listed.length, bytes: Buffer.byteLength(content, "utf8"), truncated };
 }
 
 function isBookkeepingFile(relPath: string): boolean {

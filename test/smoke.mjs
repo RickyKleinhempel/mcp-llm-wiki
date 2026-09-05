@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadConfig } from "../dist/config.js";
 import { openDb } from "../dist/db/open.js";
-import { initSchema } from "../dist/db/schema.js";
+import { hasTable, initSchema } from "../dist/db/schema.js";
 import { Embedder } from "../dist/indexing/embed.js";
 import { Indexer } from "../dist/indexing/indexer.js";
 import { setLogLevel } from "../dist/logger.js";
@@ -198,6 +198,33 @@ const incremental = await indexer.reindex({ mode: "incremental" });
 check("only changed file reindexed", incremental.indexed === 1, incremental);
 const afterEdit = await runSearch(db, embedder, config.rrfK, { query: "Nachtrag zur Vektorsuche", mode: "bm25", k: 3 });
 check("new text searchable", afterEdit.hits.some((h) => h.relPath === "llm-wiki.md"), afterEdit.hits);
+
+console.log("14. move rewrites external markdown links (not just wikilinks)");
+await writePage(ctx, {
+  path: "innen/ordner/datei.md",
+  body: "# Datei\n\nZiel eines externen Links.\n",
+  frontmatter: { title: "Datei", type: "note" },
+});
+await writePage(ctx, {
+  path: "aussenseite.md",
+  body: "# Aussenseite\n\nSiehe [Datei](innen/ordner/datei.md) fuer Details.\n",
+  frontmatter: { title: "Aussenseite", type: "note" },
+});
+await movePage(ctx, { from: "innen/ordner/datei.md", to: "archiv/datei.md" });
+const outside = readPage(ctx, "aussenseite.md");
+check("external markdown link rewritten to the new location", outside.content.includes("archiv/datei.md"), outside.content);
+check("old target no longer referenced", !outside.content.includes("innen/ordner/datei.md"), outside.content);
+
+console.log("15. incremental reindex does not orphan fts/vec rows on external delete");
+fs.unlinkSync(path.join(root, "wiki", "aussenseite.md"));
+await indexer.reindex({ mode: "incremental" });
+const chunkCount = db.prepare("SELECT COUNT(*) AS n FROM chunks").get().n;
+const ftsCount = db.prepare("SELECT COUNT(*) AS n FROM chunks_fts").get().n;
+check("fts row count matches chunk count after external delete", ftsCount === chunkCount, { chunkCount, ftsCount });
+if (hasTable(db, "chunk_vec")) {
+  const vecCount = db.prepare("SELECT COUNT(*) AS n FROM chunk_vec").get().n;
+  check("vec row count matches chunk count after external delete", vecCount === chunkCount, { chunkCount, vecCount });
+}
 
 db.close();
 console.log(failures === 0 ? "\nALL CHECKS PASSED" : `\n${failures} CHECK(S) FAILED`);

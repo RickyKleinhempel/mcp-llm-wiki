@@ -1,9 +1,17 @@
 import chokidar, { type FSWatcher } from "chokidar";
 import fs from "node:fs";
+import path from "node:path";
 import type { Config } from "../config.js";
 import { log } from "../logger.js";
 import { toRelPath } from "../paths.js";
 import type { Indexer, Layer } from "./indexer.js";
+
+/** Directory-boundary check, not a naive string prefix (one root can be a text-prefix of the other). */
+function isInside(root: string, candidate: string): boolean {
+  const normalizedRoot = path.resolve(root);
+  const normalizedCandidate = path.resolve(candidate);
+  return normalizedCandidate === normalizedRoot || normalizedCandidate.startsWith(normalizedRoot + path.sep);
+}
 
 /**
  * Optional file-system watcher.
@@ -68,7 +76,12 @@ export class WikiWatcher {
     this.draining = true;
     try {
       for (const file of files) {
-        const layer: Layer = file.toLowerCase().startsWith(this.config.rawRoot.toLowerCase()) ? "raw" : "wiki";
+        const layer: Layer | undefined = isInside(this.config.wikiRoot, file)
+          ? "wiki"
+          : isInside(this.config.rawRoot, file)
+            ? "raw"
+            : undefined;
+        if (!layer) continue;
         const root = layer === "raw" ? this.config.rawRoot : this.config.wikiRoot;
         const relPath = toRelPath(root, file);
         if (relPath.startsWith("..")) continue;
