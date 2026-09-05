@@ -1,6 +1,6 @@
 {
   "name": "mcp-llm-wiki",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "MCP server for an LLM-owned wiki with hybrid BM25 + local CPU vector search",
   "license": "MIT",
