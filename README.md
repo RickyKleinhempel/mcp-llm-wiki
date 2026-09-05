@@ -1,24 +1,24 @@
 # mcp-llm-wiki
 
-MCP-Server für ein Wiki, das ein Sprachmodell selbst pflegt: Markdown-Dateien mit YAML-Frontmatter,
-durchsuchbar über BM25 **und** lokal auf der CPU berechnete Vektoren. Kein Cloud-Dienst, keine
-Embedding-API, keine externe Datenbank.
+MCP server for a wiki an LLM maintains itself: Markdown files with YAML frontmatter,
+searchable via BM25 **and** vectors computed locally on the CPU. No cloud service, no
+embedding API, no external database.
 
-Die Idee stammt aus `llm-wiki.md` / `idee.md`: drei Ebenen (unveränderliche Quellen, vom Modell
-verantwortetes Wiki, Schema als `AGENTS.md`) und drei Operationen (Ingest, Query, Lint).
+The idea comes from `llm-wiki.md` / `idee.md`: three layers (immutable sources, a wiki
+owned by the model, schema as `AGENTS.md`) and three operations (Ingest, Query, Lint).
 
-## Aufbau
+## Layout
 
 ```
-raw/     unveränderliche Quellen  -> nur lesbar
-wiki/    das eigentliche Wiki     -> Markdown + YAML-Frontmatter
-         .llm-wiki/index.db       -> SQLite: FTS5, sqlite-vec, Metadaten, Linkgraph
-         .llm-wiki/models/        -> heruntergeladenes Embedding-Modell
+raw/     immutable sources        -> read-only
+wiki/    the wiki itself          -> Markdown + YAML frontmatter
+         .llm-wiki/index.db       -> SQLite: FTS5, sqlite-vec, metadata, link graph
+         .llm-wiki/models/        -> downloaded embedding model
 ```
 
-Der Server erzwingt **keine** Ordnerkonventionen. Er sorgt für Sicherheit (kein Ausbruch aus dem
-Wiki-Verzeichnis), gültiges Frontmatter und einen aktuellen Index. Wohin eine Seite gehört,
-entscheidet das Modell - `wiki_write_page` verlangt deshalb einen expliziten `path`.
+The server does **not** enforce folder conventions. It enforces safety (no escape from the
+wiki directory), valid frontmatter, and a current index. Where a page belongs is the model's
+decision - `wiki_write_page` therefore requires an explicit `path`.
 
 ## Installation
 
@@ -28,11 +28,11 @@ npm install
 npm run build
 ```
 
-Beim ersten Start lädt Transformers.js das Modell `Xenova/multilingual-e5-small` (~120 MB,
-384 Dimensionen, deutsch und englisch) nach `MODEL_CACHE_DIR`. Danach läuft alles offline;
-mit `ALLOW_REMOTE_MODELS=false` wird der Download unterbunden.
+On first start Transformers.js downloads the model `Xenova/multilingual-e5-small` (~120 MB,
+384 dimensions, German and English) into `MODEL_CACHE_DIR`. After that everything runs offline;
+`ALLOW_REMOTE_MODELS=false` blocks the download.
 
-## Einbinden
+## Wiring
 
 `.vscode/mcp.json`:
 
@@ -52,114 +52,113 @@ mit `ALLOW_REMOTE_MODELS=false` wird der Download unterbunden.
 }
 ```
 
-Kopiere anschließend `templates/AGENTS.md` nach `wiki/AGENTS.md` und passe sie an - das ist die
-Stelle, an der Konventionen stehen, nicht die Serverkonfiguration.
+Then copy `templates/AGENTS.md` to `wiki/AGENTS.md` and adapt it - that is where conventions
+live, not in the server configuration.
 
-## Konfiguration
+## Configuration
 
-Alle Werte lassen sich als Umgebungsvariable (`mcp.json` → `env`) oder als CLI-Flag setzen;
-CLI schlägt Umgebung schlägt Vorgabe.
+Every value can be set as an environment variable (`mcp.json` → `env`) or as a CLI flag;
+CLI overrides environment overrides the default.
 
-| Variable | Flag | Vorgabe | Bedeutung |
+| Variable | Flag | Default | Meaning |
 | --- | --- | --- | --- |
-| `WIKI_ROOT` | `--wiki-root` | **erforderlich** | Wurzel des Wikis. |
-| `RAW_ROOT` | `--raw-root` | `<WIKI_ROOT>/../raw` | Quellenebene, nur lesend. |
-| `INDEX_DB` | `--index-db` | `<WIKI_ROOT>/.llm-wiki/index.db` | SQLite-Datei. |
-| `MODEL_ID` | `--model` | `Xenova/multilingual-e5-small` | Embedding-Modell. |
-| `MODEL_CACHE_DIR` | `--model-cache-dir` | `<INDEX_DB-Ordner>/models` | Modell-Cache. |
-| `ALLOW_REMOTE_MODELS` | `--allow-remote-models` | `true` | Download erlauben. |
-| `CHUNK_CHARS` | `--chunk-chars` | `1200` | Zielgröße eines Chunks. |
-| `CHUNK_OVERLAP` | `--chunk-overlap` | `180` | Überlappung beim Teilen langer Abschnitte. |
-| `WATCH` | `--watch` | `false` | Dateisystem beobachten. |
-| `ALLOW_WRITE` | `--allow-write` | `true` | `false` schaltet alle Schreib-Tools ab. |
-| `RRF_K` | `--rrf-k` | `60` | Konstante der Rangfusion. |
-| `SCHEMA_STRICT` | `--schema-strict` | `false` | Unbekannte Frontmatter-Felder ablehnen. |
-| `DEFAULT_CONFIDENCE` | `--default-confidence` | - | Vorgabe für `confidence`. |
-| `MAX_DEPTH` | `--max-depth` | `8` | Maximale Ordnertiefe. |
-| `MAX_PATH_LENGTH` | `--max-path-length` | `240` | Maximale Pfadlänge. |
-| `STRUCTURE_HINT` | `--structure-hint` | - | Wird in Tool-Beschreibungen eingeblendet. |
-| `IGNORE_GLOBS` | `--ignore-globs` | - | Kommaliste zusätzlich ignorierter Muster. |
-| `MAX_READ_BYTES` | `--max-read-bytes` | `2097152` | Obergrenze beim Lesen. |
+| `WIKI_ROOT` | `--wiki-root` | **required** | Wiki root. |
+| `RAW_ROOT` | `--raw-root` | `<WIKI_ROOT>/../raw` | Source layer, read-only. |
+| `INDEX_DB` | `--index-db` | `<WIKI_ROOT>/.llm-wiki/index.db` | SQLite file. |
+| `MODEL_ID` | `--model` | `Xenova/multilingual-e5-small` | Embedding model. |
+| `MODEL_CACHE_DIR` | `--model-cache-dir` | `<INDEX_DB-dir>/models` | Model cache. |
+| `ALLOW_REMOTE_MODELS` | `--allow-remote-models` | `true` | Allow download. |
+| `CHUNK_CHARS` | `--chunk-chars` | `1200` | Target chunk size. |
+| `CHUNK_OVERLAP` | `--chunk-overlap` | `180` | Overlap when splitting long sections. |
+| `WATCH` | `--watch` | `false` | Watch the filesystem. |
+| `ALLOW_WRITE` | `--allow-write` | `true` | `false` disables all write tools. |
+| `RRF_K` | `--rrf-k` | `60` | Rank-fusion constant. |
+| `SCHEMA_STRICT` | `--schema-strict` | `false` | Reject unknown frontmatter fields. |
+| `DEFAULT_CONFIDENCE` | `--default-confidence` | - | Default for `confidence`. |
+| `MAX_DEPTH` | `--max-depth` | `8` | Maximum folder depth. |
+| `MAX_PATH_LENGTH` | `--max-path-length` | `240` | Maximum path length. |
+| `STRUCTURE_HINT` | `--structure-hint` | - | Injected into tool descriptions. |
+| `IGNORE_GLOBS` | `--ignore-globs` | - | Comma-separated extra ignore patterns. |
+| `MAX_READ_BYTES` | `--max-read-bytes` | `2097152` | Read size cap. |
 | `LOG_LEVEL` | `--log-level` | `info` | `debug`, `info`, `warn`, `error`, `silent`. |
 
 ## Tools
 
-**Suchen und lesen**
+**Search and read**
 
-| Tool | Zweck |
+| Tool | Purpose |
 | --- | --- |
-| `wiki_search` | Hybride Suche (BM25 + Vektoren, Reciprocal Rank Fusion). Modi `hybrid`, `bm25`, `vector`. |
-| `wiki_read_page` | Ganze Seite, Abschnitt (`section`) oder Zeilenbereich. |
-| `wiki_list_pages` | Seitenliste mit Frontmatter, filterbar nach Ordner, Typ, Status, Tag. |
-| `wiki_list_folders` | Ordnerbaum mit Seitenzahlen - vor dem Anlegen einer Seite. |
-| `wiki_list_tags` | Alle Tags mit Häufigkeit. |
-| `raw_list`, `raw_read` | Zugriff auf die Quellenebene. |
+| `wiki_search` | Hybrid search (BM25 + vectors, Reciprocal Rank Fusion). Modes `hybrid`, `bm25`, `vector`. |
+| `wiki_read_page` | Whole page, section (`section`), or line range. |
+| `wiki_list_pages` | Page list with frontmatter, filterable by folder, type, status, tag. |
+| `wiki_list_folders` | Folder tree with page counts - before creating a page. |
+| `wiki_list_tags` | All tags with counts. |
+| `raw_list`, `raw_read` | Access to the source layer. |
 
-**Schreiben**
+**Write**
 
-| Tool | Zweck |
+| Tool | Purpose |
 | --- | --- |
-| `wiki_write_page` | Seite anlegen oder ersetzen. `path` ist Pflicht, fehlende Ordner entstehen automatisch. |
-| `wiki_patch_page` | `replace-section`, `append-section`, `append`, `prepend`, `replace-body` oder nur Frontmatter. |
-| `wiki_move_page` | Datei oder Ordner verschieben; relative Links werden mitgezogen (`dryRun` möglich). |
-| `wiki_delete_page` | Verschiebt nach `.trash/<Zeitstempel>/`, verlangt `confirm: true`. |
+| `wiki_write_page` | Create or replace a page. `path` is required; missing folders are created. |
+| `wiki_patch_page` | `replace-section`, `append-section`, `append`, `prepend`, `replace-body`, or frontmatter only. |
+| `wiki_move_page` | Move a file or folder; relative links are rewritten (`dryRun` available). |
+| `wiki_delete_page` | Moves to `.trash/<timestamp>/`, requires `confirm: true`. |
 
-**Buchführung und Pflege**
+**Bookkeeping and maintenance**
 
-| Tool | Zweck |
+| Tool | Purpose |
 | --- | --- |
-| `wiki_update_index` | Erzeugt `index.md` - global oder für einen Ordner (`scope`). |
-| `wiki_append_log`, `wiki_read_log` | Chronologie in `log.md` als `## [YYYY-MM-DD] op \| Titel`. |
-| `wiki_backlinks` | Ein- und ausgehende Verweise, inklusive der toten. |
-| `wiki_lint` | Frontmatter, Datumsangaben, doppelte ids, tote Links, Waisen, leere Ordner. |
-| `wiki_reindex`, `wiki_index_status` | Index neu aufbauen bzw. Zustand abfragen. |
+| `wiki_update_index` | Writes `index.md` - global or for a folder (`scope`). |
+| `wiki_append_log`, `wiki_read_log` | Chronology in `log.md` as `## [YYYY-MM-DD] op \| title`. |
+| `wiki_backlinks` | Inbound and outbound links, including dead ones. |
+| `wiki_lint` | Frontmatter, dates, duplicate ids, dead links, orphans, empty folders. |
+| `wiki_reindex`, `wiki_index_status` | Rebuild the index or query its state. |
 
-## Wie die Suche funktioniert
+## How search works
 
-1. Jede Datei wird an Überschriften geschnitten; zu lange Abschnitte werden an Absätzen mit
-   Überlappung geteilt. Der Überschriftenpfad (`H1 > H2`) bleibt am Chunk hängen.
-2. BM25 läuft über FTS5 mit gewichteten Spalten (Text, Überschriftenpfad, Titel, Summary, Tags).
-   Anfragen werden in Anführungszeichen gesetzt, damit FTS5-Operatoren nicht durchschlagen;
-   zuerst wird `AND` versucht, dann `OR`.
-3. Die Vektorsuche nutzt `sqlite-vec` mit Kosinusabstand. Das e5-Modell braucht Präfixe
-   (`passage:` beim Indexieren, `query:` beim Suchen) - der Server setzt sie selbst.
-4. Beide Ranglisten werden per Reciprocal Rank Fusion zusammengeführt, danach bleibt pro Seite
-   der beste Chunk übrig.
+1. Each file is split on headings; sections that are still too long are split on paragraphs
+   with overlap. The heading path (`H1 > H2`) stays attached to the chunk.
+2. BM25 runs over FTS5 with weighted columns (text, heading path, title, summary, tags).
+   Queries are wrapped in quotes so FTS5 operators do not leak through;
+   `AND` is tried first, then `OR`.
+3. Vector search uses `sqlite-vec` with cosine distance. The e5 model needs prefixes
+   (`passage:` when indexing, `query:` when searching) - the server adds them.
+4. Both rankings are merged with Reciprocal Rank Fusion, then the best chunk per page remains.
 
-## Sicherheit
+## Security
 
-- Jeder Pfad wird normalisiert und gegen die Wurzel geprüft (`..`, absolute Pfade, UNC, reservierte
-  Windows-Namen, Steuerzeichen). Zusätzlich wird über `realpath` geprüft, damit Symlinks nicht
-  hinausführen; beim Indexieren werden Symlinks komplett übersprungen.
-- `RAW_ROOT` ist ausschließlich lesbar.
-- Löschen heißt Verschieben in den Papierkorb und verlangt eine ausdrückliche Bestätigung.
-- Alle SQL-Zugriffe laufen über Parameter, nie über Stringverkettung.
+- Every path is normalized and checked against the root (`..`, absolute paths, UNC, reserved
+  Windows names, control characters). `realpath` is also used so symlinks cannot escape;
+  indexing skips symlinks entirely.
+- `RAW_ROOT` is read-only.
+- Delete means move to the trash and requires an explicit confirmation.
+- All SQL access uses parameters, never string concatenation.
 
-### Bekannte Schwachstellen in Abhängigkeiten
+### Known vulnerabilities in dependencies
 
-`npm audit` meldet vier Einträge mit hohem Schweregrad, für die es keinen Fix gibt:
+`npm audit` reports four high-severity findings with no fix:
 
-- `adm-zip < 0.6.0` über `onnxruntime-node`
-- `sharp < 0.35.0` über `@huggingface/transformers`
+- `adm-zip < 0.6.0` via `onnxruntime-node`
+- `sharp < 0.35.0` via `@huggingface/transformers`
 
-Beide Pfade werden hier nicht ausgeführt: Der Server entpackt keine fremden Archive und verarbeitet
-keine Bilder. Wer das anders bewertet, kann die Vektorsuche mit `mode: "bm25"` umgehen; ein Ersatz
-der Abhängigkeit steht aus.
+Neither path is exercised here: the server does not unpack untrusted archives and does not
+process images. If you disagree, you can skip vector search with `mode: "bm25"`; a replacement
+for the dependency is pending.
 
 ## Tests
 
 ```powershell
 npm run build
-npm test        # Indexierung, Suche, Pfadsicherheit, Schreiben, Move, Lint, Löschen
-npm run test:stdio  # echter MCP-Client über stdio gegen den gebauten Server
+npm test        # indexing, search, path safety, write, move, lint, delete
+npm run test:stdio  # real MCP client over stdio against the built server
 ```
 
-Beide Skripte legen ein Wegwerf-Wiki unter `.smoke/` an.
+Both scripts create a throwaway wiki under `.smoke/`.
 
-## Hinweise
+## Notes
 
-- stdout gehört dem JSON-RPC-Protokoll. Diagnose geht ausschließlich nach stderr.
-- Der erste Indexlauf startet erst, nachdem die Verbindung steht - der Client wartet nicht auf den
-  Modell-Download.
-- Wird das Modell gewechselt, erkennt der Server die abweichende Dimension und baut den Vektorindex
-  beim nächsten Lauf neu auf.
+- stdout belongs to the JSON-RPC protocol. Diagnostics go to stderr only.
+- The first index pass starts only after the connection is up - the client does not wait for
+  the model download.
+- If the model is changed, the server detects the different dimension and rebuilds the vector
+  index on the next pass.

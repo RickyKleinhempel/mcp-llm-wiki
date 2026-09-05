@@ -6,27 +6,27 @@ import { frontmatterArg, handle } from "./shared.js";
 
 export function registerWriteTools(server: McpServer, ctx: ServerContext): void {
   const hint = ctx.config.structureHint
-    ? ` Konvention in diesem Wiki: ${ctx.config.structureHint}`
+    ? ` Convention in this wiki: ${ctx.config.structureHint}`
     : "";
 
   server.registerTool(
     "wiki_write_page",
     {
-      title: "Wiki-Seite schreiben",
+      title: "Write wiki page",
       description:
-        "Legt eine Wiki-Seite an oder überschreibt sie vollständig. Der Pfad wird bewusst NICHT vom Server abgeleitet: " +
-        "Du entscheidest über Ordner und Dateinamen. Fehlende Ordner werden automatisch erstellt. " +
-        "Rufe vorher wiki_list_folders auf, um dich an die vorhandene Struktur anzulehnen. " +
-        "Der YAML-Header wird ergänzt (id, title, type, created, updated), vorhandene Felder bleiben erhalten. " +
-        "Eine bestehende Datei wird nur mit overwrite=true ersetzt - für Teiländerungen ist wiki_patch_page besser." +
+        "Create or fully overwrite a wiki page. The path is deliberately NOT derived by the server: " +
+        "you choose the folder and filename. Missing folders are created automatically. " +
+        "Call wiki_list_folders first so the path matches the existing structure. " +
+        "The YAML header is completed (id, title, type, created, updated); existing fields are kept. " +
+        "An existing file is replaced only with overwrite=true - use wiki_patch_page for partial edits." +
         hint,
       inputSchema: {
         path: z
           .string()
-          .describe("Zielpfad relativ zum Wiki-Root inklusive .md, z. B. 'konzepte/wissensmanagement/llm-wiki.md'."),
-        body: z.string().describe("Markdown-Inhalt ohne YAML-Header."),
-        frontmatter: frontmatterArg.optional().describe("Frontmatter-Felder; 'updated' wird immer gesetzt."),
-        overwrite: z.boolean().optional().describe("Bestehende Datei ersetzen (Standard false)."),
+          .describe("Target path relative to the wiki root, including .md, e.g. 'concepts/knowledge-management/llm-wiki.md'."),
+        body: z.string().describe("Markdown body without the YAML header."),
+        frontmatter: frontmatterArg.optional().describe("Frontmatter fields; 'updated' is always set."),
+        overwrite: z.boolean().optional().describe("Replace an existing file (default false)."),
       },
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
     },
@@ -36,24 +36,24 @@ export function registerWriteTools(server: McpServer, ctx: ServerContext): void 
   server.registerTool(
     "wiki_patch_page",
     {
-      title: "Wiki-Seite ändern",
+      title: "Patch wiki page",
       description:
-        "Ändert eine bestehende Seite gezielt, ohne sie neu zu schreiben. Modi: 'replace-section' und 'append-section' " +
-        "(benötigen `section` mit dem Überschriftentext), 'append', 'prepend', 'replace-body'. " +
-        "Ohne `mode` wird nur der Frontmatter angepasst. 'updated' wird immer aktualisiert.",
+        "Change an existing page without rewriting it. Modes: 'replace-section' and 'append-section' " +
+        "(require `section` with the heading text), 'append', 'prepend', 'replace-body'. " +
+        "Omit `mode` to update frontmatter only. 'updated' is always refreshed.",
       inputSchema: {
-        path: z.string().describe("Pfad relativ zum Wiki-Root."),
+        path: z.string().describe("Path relative to the wiki root."),
         mode: z
           .enum(["replace-section", "append-section", "append", "prepend", "replace-body"])
           .optional()
-          .describe("Art der Textänderung; weglassen für reine Frontmatter-Updates."),
-        section: z.string().optional().describe("Überschriftentext für die section-Modi."),
-        content: z.string().optional().describe("Neuer Text; bei gesetztem `mode` erforderlich."),
-        frontmatter: frontmatterArg.optional().describe("Zu setzende Frontmatter-Felder."),
+          .describe("Kind of text change; omit for frontmatter-only updates."),
+        section: z.string().optional().describe("Heading text for the section modes."),
+        content: z.string().optional().describe("New text; required when `mode` is set."),
+        frontmatter: frontmatterArg.optional().describe("Frontmatter fields to set."),
         frontmatterMode: z
           .enum(["merge", "replace"])
           .optional()
-          .describe("'merge' (Standard) ergänzt, 'replace' ersetzt den kompletten Header."),
+          .describe("'merge' (default) fills in, 'replace' replaces the whole header."),
       },
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
     },
@@ -63,17 +63,17 @@ export function registerWriteTools(server: McpServer, ctx: ServerContext): void 
   server.registerTool(
     "wiki_move_page",
     {
-      title: "Seite oder Ordner verschieben",
+      title: "Move page or folder",
       description:
-        "Verschiebt oder benennt eine Seite bzw. einen ganzen Ordner um und repariert dabei relative Markdown-Links " +
-        "(Wikilinks über die id bleiben ohnehin gültig). Mit dryRun=true bekommst du die geplanten Änderungen, " +
-        "ohne dass etwas geschrieben wird.",
+        "Move or rename a page or a whole folder and rewrite relative Markdown links " +
+        "(id-based wikilinks stay valid). With dryRun=true you get the planned changes " +
+        "without writing anything.",
       inputSchema: {
-        from: z.string().describe("Aktueller Pfad (Datei oder Ordner) relativ zum Wiki-Root."),
-        to: z.string().describe("Zielpfad relativ zum Wiki-Root."),
-        updateLinks: z.boolean().optional().describe("Links in anderen Seiten anpassen (Standard true)."),
-        dryRun: z.boolean().optional().describe("Nur planen, nichts schreiben."),
-        overwrite: z.boolean().optional().describe("Vorhandenes Ziel überschreiben (Standard false)."),
+        from: z.string().describe("Current path (file or folder) relative to the wiki root."),
+        to: z.string().describe("Target path relative to the wiki root."),
+        updateLinks: z.boolean().optional().describe("Rewrite links on other pages (default true)."),
+        dryRun: z.boolean().optional().describe("Plan only, do not write."),
+        overwrite: z.boolean().optional().describe("Overwrite an existing target (default false)."),
       },
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
     },
@@ -83,13 +83,13 @@ export function registerWriteTools(server: McpServer, ctx: ServerContext): void 
   server.registerTool(
     "wiki_delete_page",
     {
-      title: "Wiki-Seite löschen",
+      title: "Delete wiki page",
       description:
-        "Verschiebt eine Seite in den Papierkorb (.trash/<Zeitstempel>/) und entfernt sie aus dem Index. " +
-        "Erfordert confirm=true. Prüfe vorher mit wiki_backlinks, ob andere Seiten darauf verweisen.",
+        "Move a page to the trash (.trash/<timestamp>/) and drop it from the index. " +
+        "Requires confirm=true. Check wiki_backlinks first to see if other pages link here.",
       inputSchema: {
-        path: z.string().describe("Pfad relativ zum Wiki-Root."),
-        confirm: z.literal(true).describe("Muss explizit true sein."),
+        path: z.string().describe("Path relative to the wiki root."),
+        confirm: z.literal(true).describe("Must be explicitly true."),
       },
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
     },

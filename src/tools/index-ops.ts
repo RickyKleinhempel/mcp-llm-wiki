@@ -8,14 +8,13 @@ export function registerIndexTools(server: McpServer, ctx: ServerContext): void 
   server.registerTool(
     "wiki_reindex",
     {
-      title: "Index neu aufbauen",
+      title: "Rebuild index",
       description:
-        "Aktualisiert den Suchindex. 'incremental' (Standard) verarbeitet nur geänderte Dateien, 'full' baut alles neu " +
-        "auf. Normalerweise unnötig, weil Schreib-Tools den Index selbst pflegen - nötig nach Änderungen, die an diesem " +
-        "Server vorbei am Dateisystem gemacht wurden.",
+        "Refresh the search index. 'incremental' (default) processes changed files only; 'full' rebuilds everything. " +
+        "Usually unnecessary because write tools update the index - needed after filesystem changes made outside this server.",
       inputSchema: {
-        mode: z.enum(["incremental", "full"]).optional().describe("Standard: incremental."),
-        paths: z.array(z.string()).optional().describe("Nur diese Pfade (relativ zum Wiki-Root) neu einlesen."),
+        mode: z.enum(["incremental", "full"]).optional().describe("Default: incremental."),
+        paths: z.array(z.string()).optional().describe("Re-read only these paths (relative to the wiki root)."),
       },
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     },
@@ -25,10 +24,10 @@ export function registerIndexTools(server: McpServer, ctx: ServerContext): void 
   server.registerTool(
     "wiki_index_status",
     {
-      title: "Indexstatus",
+      title: "Index status",
       description:
-        "Zeigt Konfiguration und Zustand des Index: Wurzelverzeichnisse, Embedding-Modell und Dimension, Anzahl " +
-        "Seiten/Chunks/Tags/Links und den Zeitpunkt der letzten Indexierung. Guter erster Aufruf in einer Sitzung.",
+        "Show index configuration and state: root directories, embedding model and dimension, counts of " +
+        "pages/chunks/tags/links, and last index time. A good first call in a session.",
       inputSchema: {},
       annotations: { readOnlyHint: true, openWorldHint: false },
     },

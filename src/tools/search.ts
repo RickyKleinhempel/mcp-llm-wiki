@@ -8,17 +8,17 @@ export function registerSearchTools(server: McpServer, ctx: ServerContext): void
   server.registerTool(
     "wiki_search",
     {
-      title: "Wiki durchsuchen",
+      title: "Search wiki",
       description:
-        "Hybride Suche über das Wiki: BM25 (SQLite FTS5) und lokale CPU-Vektoren werden per Reciprocal Rank Fusion " +
-        "kombiniert. Liefert pro Seite den besten Treffer mit Pfad, Überschriftenpfad, Zeilenbereich und Frontmatter-Auszug. " +
-        "Nutze mode='bm25' für exakte Begriffe, mode='vector' für semantische Umschreibungen, sonst 'hybrid'.",
+        "Hybrid search over the wiki: BM25 (SQLite FTS5) and local CPU vectors combined with Reciprocal Rank Fusion. " +
+        "Returns the best hit per page with path, heading path, line range, and a frontmatter excerpt. " +
+        "Use mode='bm25' for exact terms, mode='vector' for semantic paraphrases, otherwise 'hybrid'.",
       inputSchema: {
-        query: z.string().min(1).describe("Suchanfrage in natürlicher Sprache oder als Stichworte."),
-        mode: z.enum(["hybrid", "bm25", "vector"]).optional().describe("Suchverfahren (Standard: hybrid)."),
-        k: z.number().int().min(1).max(50).optional().describe("Maximale Trefferzahl (Standard 10)."),
-        layer: z.enum(["wiki", "raw"]).optional().describe("Ebene: 'wiki' (Standard) oder 'raw' (Quellen)."),
-        includeText: z.boolean().optional().describe("Vollständigen Chunk-Text mitliefern statt nur einen Auszug."),
+        query: z.string().min(1).describe("Natural-language or keyword query."),
+        mode: z.enum(["hybrid", "bm25", "vector"]).optional().describe("Search method (default: hybrid)."),
+        k: z.number().int().min(1).max(50).optional().describe("Max hits (default 10)."),
+        layer: z.enum(["wiki", "raw"]).optional().describe("Layer: 'wiki' (default) or 'raw' (sources)."),
+        includeText: z.boolean().optional().describe("Include full chunk text instead of an excerpt."),
         ...searchFilterArgs,
       },
       annotations: { readOnlyHint: true, openWorldHint: false },

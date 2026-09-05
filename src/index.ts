@@ -49,13 +49,13 @@ async function main(): Promise<void> {
     { name: "mcp-llm-wiki", version: "0.1.0" },
     {
       instructions:
-        "Dieses Wiki ist ein LLM-gepflegter Wissensspeicher aus Markdown-Dateien mit YAML-Frontmatter. " +
-        "Beginne eine Sitzung mit wiki_index_status und wiki_search, bevor du schreibst. " +
-        "Suche immer zuerst nach einer bestehenden Seite und erweitere sie per wiki_patch_page, statt Duplikate anzulegen. " +
-        "Beim Anlegen einer Seite bestimmst du den Pfad selbst - orientiere dich mit wiki_list_folders an der " +
-        "vorhandenen Struktur und lege Unterordner nur an, wenn ein Thema sie wirklich trägt. " +
-        "Nach jeder inhaltlichen Änderung wiki_append_log aufrufen und bei Bedarf wiki_update_index. " +
-        "Die raw-Ebene ist unveränderlich: Quellen werden gelesen, niemals überschrieben.",
+        "This wiki is an LLM-maintained knowledge store of Markdown files with YAML frontmatter. " +
+        "Start a session with wiki_index_status and wiki_search before writing. " +
+        "Always search for an existing page first and extend it with wiki_patch_page instead of creating duplicates. " +
+        "When creating a page you choose the path yourself - use wiki_list_folders to match the existing structure " +
+        "and only add subfolders when a topic actually needs them. " +
+        "After every content change call wiki_append_log, and wiki_update_index if needed. " +
+        "The raw layer is immutable: sources are read, never overwritten.",
     },
   );
 

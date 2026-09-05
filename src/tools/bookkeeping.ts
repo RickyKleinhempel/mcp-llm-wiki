@@ -9,14 +9,13 @@ export function registerBookkeepingTools(server: McpServer, ctx: ServerContext):
   server.registerTool(
     "wiki_update_index",
     {
-      title: "index.md aktualisieren",
+      title: "Update index.md",
       description:
-        "Erzeugt oder aktualisiert eine index.md als Inhaltsverzeichnis. Ohne `scope` entsteht der Gesamtindex im " +
-        "Wiki-Root, mit `scope` ein Index für genau diesen Ordner (<scope>/index.md). Die Einträge stammen aus " +
-        "Titel und summary der indexierten Seiten - pflege also den Frontmatter, bevor du hier aufräumst.",
+        "Create or refresh an index.md catalogue. With no `scope` this is the root index; with `scope` it writes " +
+        "<scope>/index.md. Entries come from indexed page titles and summaries - keep frontmatter current before calling.",
       inputSchema: {
-        scope: z.string().optional().describe("Ordner, für den der Index erzeugt wird; leer = gesamtes Wiki."),
-        title: z.string().optional().describe("Abweichender Titel für die Indexseite."),
+        scope: z.string().optional().describe("Folder to index; omit for the whole wiki."),
+        title: z.string().optional().describe("Override title for the index page."),
       },
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     },
@@ -26,16 +25,15 @@ export function registerBookkeepingTools(server: McpServer, ctx: ServerContext):
   server.registerTool(
     "wiki_append_log",
     {
-      title: "Log-Eintrag anhängen",
+      title: "Append log entry",
       description:
-        "Hängt einen Eintrag im Format '## [YYYY-MM-DD] <operation> | <title>' an die log.md im Wiki-Root an. " +
-        "Nach jeder inhaltlichen Änderung aufrufen (ingest, update, merge, split, delete, refactor), damit die " +
-        "Historie chronologisch nachvollziehbar bleibt.",
+        "Append an entry in the form '## [YYYY-MM-DD] <operation> | <title>' to log.md at the wiki root. " +
+        "Call after every content change (ingest, update, merge, split, delete, refactor) so history stays chronological.",
       inputSchema: {
-        operation: z.string().min(1).describe("Kurzer Operationsname, z. B. 'ingest', 'update', 'merge'."),
-        title: z.string().min(1).describe("Betroffene Seite oder Thema."),
-        details: z.string().optional().describe("Optionale Erläuterung, wird unter die Überschrift gesetzt."),
-        date: z.string().optional().describe("ISO-Datum (YYYY-MM-DD); Standard ist heute."),
+        operation: z.string().min(1).describe("Short operation name, e.g. 'ingest', 'update', 'merge'."),
+        title: z.string().min(1).describe("Affected page or topic."),
+        details: z.string().optional().describe("Optional note placed under the heading."),
+        date: z.string().optional().describe("ISO date (YYYY-MM-DD); default today."),
       },
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
     },
@@ -45,10 +43,10 @@ export function registerBookkeepingTools(server: McpServer, ctx: ServerContext):
   server.registerTool(
     "wiki_read_log",
     {
-      title: "Letzte Log-Einträge lesen",
-      description: "Liefert die letzten Einträge aus log.md, neueste zuerst - nützlich als Einstieg in eine Sitzung.",
+      title: "Read recent log entries",
+      description: "Return the latest log.md entries, newest first - useful at the start of a session.",
       inputSchema: {
-        limit: z.number().int().min(1).max(100).optional().describe("Anzahl der Einträge (Standard 10)."),
+        limit: z.number().int().min(1).max(100).optional().describe("Number of entries (default 10)."),
       },
       annotations: { readOnlyHint: true, openWorldHint: false },
     },

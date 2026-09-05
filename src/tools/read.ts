@@ -9,16 +9,16 @@ export function registerReadTools(server: McpServer, ctx: ServerContext): void {
   server.registerTool(
     "wiki_read_page",
     {
-      title: "Wiki-Seite lesen",
+      title: "Read wiki page",
       description:
-        "Liest eine Wiki-Seite. Ohne weitere Parameter kommt die komplette Datei inklusive Frontmatter zurück; " +
-        "mit `section` nur der Abschnitt unter der angegebenen Überschrift, mit startLine/endLine ein Zeilenbereich.",
+        "Read a wiki page. With no extra args the full file including frontmatter is returned; " +
+        "`section` returns that heading's section; startLine/endLine return a line range.",
       inputSchema: {
-        path: z.string().describe("Pfad relativ zum Wiki-Root, z. B. 'konzepte/llm-wiki.md'."),
-        section: z.string().optional().describe("Überschriftentext, dessen Abschnitt gelesen werden soll."),
-        startLine: z.number().int().min(1).optional().describe("Erste Zeile (1-basiert, inklusive)."),
-        endLine: z.number().int().min(1).optional().describe("Letzte Zeile (1-basiert, inklusive)."),
-        includeFrontmatter: z.boolean().optional().describe("false blendet den YAML-Header aus (Standard true)."),
+        path: z.string().describe("Path relative to the wiki root, e.g. 'concepts/llm-wiki.md'."),
+        section: z.string().optional().describe("Heading text whose section to read."),
+        startLine: z.number().int().min(1).optional().describe("First line (1-based, inclusive)."),
+        endLine: z.number().int().min(1).optional().describe("Last line (1-based, inclusive)."),
+        includeFrontmatter: z.boolean().optional().describe("false omits the YAML header (default true)."),
       },
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
@@ -36,16 +36,16 @@ export function registerReadTools(server: McpServer, ctx: ServerContext): void {
   server.registerTool(
     "wiki_list_pages",
     {
-      title: "Wiki-Seiten auflisten",
+      title: "List wiki pages",
       description:
-        "Listet indexierte Wiki-Seiten mit Pfad, id, Titel, Zusammenfassung, Typ, Status, Tags und Änderungsdatum. " +
-        "Filterbar nach Ordner, Typ, Status und Tag.",
+        "List indexed wiki pages with path, id, title, summary, type, status, tags, and updated date. " +
+        "Filterable by folder, type, status, and tag.",
       inputSchema: {
-        folder: z.string().optional().describe("Nur Seiten in diesem Ordner."),
-        recursive: z.boolean().optional().describe("Unterordner einschließen (Standard true)."),
+        folder: z.string().optional().describe("Only pages in this folder."),
+        recursive: z.boolean().optional().describe("Include subfolders (default true)."),
         type: z.enum(PAGE_TYPES).optional(),
         status: z.enum(PAGE_STATUSES).optional(),
-        tag: z.string().optional().describe("Nur Seiten mit diesem Tag."),
+        tag: z.string().optional().describe("Only pages with this tag."),
         limit: z.number().int().min(1).max(1000).optional(),
         offset: z.number().int().min(0).optional(),
       },
@@ -57,13 +57,13 @@ export function registerReadTools(server: McpServer, ctx: ServerContext): void {
   server.registerTool(
     "wiki_list_folders",
     {
-      title: "Ordnerbaum anzeigen",
+      title: "Show folder tree",
       description:
-        "Zeigt den bestehenden Ordnerbaum des Wikis mit Seitenzahlen je Ordner. " +
-        "Vor dem Anlegen einer neuen Seite aufrufen, um den Pfad konsistent zur vorhandenen Struktur zu wählen." +
-        (ctx.config.structureHint ? ` Konvention in diesem Wiki: ${ctx.config.structureHint}` : ""),
+        "Show the wiki folder tree with page counts per folder. " +
+        "Call before creating a page so the path matches the existing structure." +
+        (ctx.config.structureHint ? ` Convention in this wiki: ${ctx.config.structureHint}` : ""),
       inputSchema: {
-        maxDepth: z.number().int().min(0).max(32).optional().describe("Nur Ordner bis zu dieser Tiefe."),
+        maxDepth: z.number().int().min(0).max(32).optional().describe("Only folders up to this depth."),
       },
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
@@ -77,8 +77,8 @@ export function registerReadTools(server: McpServer, ctx: ServerContext): void {
   server.registerTool(
     "wiki_list_tags",
     {
-      title: "Tags auflisten",
-      description: "Listet alle im Wiki vergebenen Tags mit Häufigkeit, absteigend sortiert.",
+      title: "List tags",
+      description: "List all tags used in the wiki with counts, highest first.",
       inputSchema: {},
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
@@ -88,11 +88,11 @@ export function registerReadTools(server: McpServer, ctx: ServerContext): void {
   server.registerTool(
     "raw_list",
     {
-      title: "Quelldateien auflisten",
+      title: "List source files",
       description:
-        "Listet Dateien in der unveränderlichen Quellenebene (RAW_ROOT). Diese Ebene ist strikt schreibgeschützt.",
+        "List files in the immutable source layer (RAW_ROOT). This layer is strictly read-only.",
       inputSchema: {
-        prefix: z.string().optional().describe("Nur Dateien unterhalb dieses Präfixes."),
+        prefix: z.string().optional().describe("Only files under this prefix."),
       },
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
@@ -102,10 +102,10 @@ export function registerReadTools(server: McpServer, ctx: ServerContext): void {
   server.registerTool(
     "raw_read",
     {
-      title: "Quelldatei lesen",
-      description: "Liest eine Datei aus RAW_ROOT, optional als Zeilenbereich. Schreibzugriff gibt es hier nicht.",
+      title: "Read source file",
+      description: "Read a file from RAW_ROOT, optionally as a line range. There is no write access here.",
       inputSchema: {
-        path: z.string().describe("Pfad relativ zu RAW_ROOT."),
+        path: z.string().describe("Path relative to RAW_ROOT."),
         startLine: z.number().int().min(1).optional(),
         endLine: z.number().int().min(1).optional(),
       },

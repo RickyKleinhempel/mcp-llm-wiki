@@ -30,12 +30,12 @@ export function registerGraphTools(server: McpServer, ctx: ServerContext): void 
   server.registerTool(
     "wiki_backlinks",
     {
-      title: "Verlinkungen einer Seite",
+      title: "Page links",
       description:
-        "Zeigt, welche Seiten auf die angegebene Seite verweisen (inbound), wohin sie selbst verlinkt (outbound) und " +
-        "welche ihrer Verweise ins Leere laufen. Vor dem Löschen, Verschieben oder Zusammenführen aufrufen.",
+        "Show which pages link to this page (inbound), where it links (outbound), and which of its links are dead. " +
+        "Call before delete, move, or merge.",
       inputSchema: {
-        path: z.string().describe("Pfad relativ zum Wiki-Root."),
+        path: z.string().describe("Path relative to the wiki root."),
       },
       annotations: { readOnlyHint: true, openWorldHint: false },
     },
@@ -53,15 +53,15 @@ export function registerGraphTools(server: McpServer, ctx: ServerContext): void 
   server.registerTool(
     "wiki_lint",
     {
-      title: "Wiki prüfen",
+      title: "Lint wiki",
       description:
-        "Prüft das Wiki auf Frontmatter-Fehler, ungültige Datumsangaben, doppelte ids, tote Links, nicht auflösbare " +
-        "Quellen, verwaiste Seiten und leere Ordner. Es wird nichts verändert - das Ergebnis ist eine Arbeitsliste. " +
-        "Die Ordnerstruktur selbst wird nicht bewertet, nur ihre technischen Grenzen (Tiefe, Pfadlänge).",
+        "Check the wiki for frontmatter errors, invalid dates, duplicate ids, dead links, unresolved sources, " +
+        "orphan pages, and empty folders. Nothing is changed - the result is a work list. " +
+        "Folder layout is not judged, only technical limits (depth, path length).",
       inputSchema: {
-        folder: z.string().optional().describe("Nur diesen Ordner samt Unterordnern prüfen."),
-        checks: z.array(z.enum(LINT_CHECKS)).optional().describe("Nur diese Prüfungen ausführen."),
-        limit: z.number().int().min(1).max(2000).optional().describe("Maximale Anzahl gemeldeter Befunde."),
+        folder: z.string().optional().describe("Check only this folder and its subfolders."),
+        checks: z.array(z.enum(LINT_CHECKS)).optional().describe("Run only these checks."),
+        limit: z.number().int().min(1).max(2000).optional().describe("Max findings to report."),
       },
       annotations: { readOnlyHint: true, openWorldHint: false },
     },

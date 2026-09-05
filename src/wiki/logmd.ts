@@ -49,7 +49,7 @@ export async function appendLog(
   const body = parsed.body.trim().length > 0 ? `${parsed.body.replace(/\s*$/, "")}\n\n${entry}` : entry;
 
   const frontmatter = completeFrontmatter(
-    { title: "Log", type: "log", summary: "Chronologisches Protokoll aller Wiki-Operationen." },
+    { title: "Log", type: "log", summary: "Chronological log of all wiki operations." },
     {
       fallbackId: "log",
       fallbackTitle: "Log",

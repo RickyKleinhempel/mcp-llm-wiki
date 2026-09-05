@@ -1,78 +1,78 @@
 ---
 id: AGENTS
-title: Wiki-Schema und Arbeitsregeln
+title: Wiki schema and working rules
 type: note
 status: stable
-summary: Konventionen für dieses Wiki - Frontmatter, Seitentypen, Ordnerstruktur und Ablauf beim Schreiben.
+summary: Conventions for this wiki - frontmatter, page types, folder structure, and the writing workflow.
 tags: [meta, schema]
 created: 2026-01-01
 updated: 2026-01-01
 ---
 
-# Wiki-Schema und Arbeitsregeln
+# Wiki schema and working rules
 
-Diese Datei beschreibt, wie dieses Wiki geführt wird. Sie ist die einzige Quelle für Konventionen -
-der MCP-Server erzwingt sie nicht, er erzwingt nur Sicherheitsgrenzen.
+This file describes how this wiki is run. It is the only source of conventions -
+the MCP server does not enforce them, only safety limits.
 
 ## Frontmatter
 
-Jede Seite beginnt mit einem YAML-Header. Pflichtfelder werden beim Schreiben automatisch ergänzt.
+Every page starts with a YAML header. Required fields are filled in automatically on write.
 
-| Feld | Pflicht | Bedeutung |
+| Field | Required | Meaning |
 | --- | --- | --- |
-| `id` | ja | Stabiler Bezeichner, Ziel von `[[wikilinks]]`. Standard: Dateiname ohne `.md`. |
-| `title` | ja | Überschrift in Alltagssprache. |
-| `type` | ja | `note`, `concept`, `source-summary`, `howto`, `index`, `log`. |
-| `status` | nein | `draft`, `stable`, `deprecated`. |
-| `summary` | nein | Ein bis zwei Sätze. Erscheint in Suchtreffern und im Index. |
-| `tags` | nein | Kleingeschrieben, Mehrzahl vermeiden. |
-| `aliases` | nein | Weitere Namen, unter denen die Seite verlinkt werden darf. |
-| `sources` | nein | Pfade relativ zu `RAW_ROOT`. |
-| `related` | nein | ids verwandter Seiten. |
-| `supersedes` / `superseded_by` | nein | Ablösung. Mit `superseded_by` gehört `status: deprecated`. |
-| `created` / `updated` | ja | ISO-Datum. `updated` wird bei jedem Schreibvorgang gesetzt. |
-| `confidence` | nein | `low`, `medium`, `high`. |
+| `id` | yes | Stable identifier, target of `[[wikilinks]]`. Default: filename without `.md`. |
+| `title` | yes | Everyday-language heading. |
+| `type` | yes | `note`, `concept`, `source-summary`, `howto`, `index`, `log`. |
+| `status` | no | `draft`, `stable`, `deprecated`. |
+| `summary` | no | One or two sentences. Appears in search hits and the index. |
+| `tags` | no | Lowercase, avoid plurals. |
+| `aliases` | no | Other names the page may be linked under. |
+| `sources` | no | Paths relative to `RAW_ROOT`. |
+| `related` | no | ids of related pages. |
+| `supersedes` / `superseded_by` | no | Replacement. With `superseded_by` set `status: deprecated`. |
+| `created` / `updated` | yes | ISO date. `updated` is set on every write. |
+| `confidence` | no | `low`, `medium`, `high`. |
 
-## Seitentypen
+## Page types
 
-- **concept** - eine Idee, ein Begriff, ein Modell. Zeitlos formuliert.
-- **source-summary** - Verdichtung genau einer Quelle. `sources` ist gesetzt.
-- **howto** - Handlungsanleitung in Schritten.
-- **note** - alles andere.
-- **index** / **log** - Buchführung, wird von den Tools gepflegt.
+- **concept** - an idea, a term, a model. Written timelessly.
+- **source-summary** - distillation of exactly one source. `sources` is set.
+- **howto** - step-by-step instructions.
+- **note** - everything else.
+- **index** / **log** - bookkeeping, maintained by the tools.
 
-## Ordnerstruktur
+## Folder structure
 
-Die Struktur wächst mit dem Inhalt und wird nicht vorab festgelegt.
+The structure grows with the content and is not predefined.
 
-- Vor dem Anlegen einer Seite `wiki_list_folders` aufrufen und sich einfügen.
-- Ein neuer Unterordner lohnt sich ab etwa fünf verwandten Seiten, vorher nicht.
-- Dateinamen: kleingeschrieben, Bindestriche statt Leerzeichen, `.md`.
-- `index.md` und `log.md` liegen in der Wurzel; Ordner dürfen eine eigene `index.md` haben.
+- Call `wiki_list_folders` before creating a page and fit in.
+- A new subfolder is worth it around five related pages, not before.
+- Filenames: lowercase, hyphens instead of spaces, `.md`.
+- `index.md` and `log.md` live at the root; folders may have their own `index.md`.
 
-## Ablauf
+## Workflow
 
-**Aufnehmen (Ingest)**
+**Ingest**
 
-1. `raw_list` / `raw_read` - Quelle lesen.
-2. `wiki_search` - gibt es die Seite schon?
-3. Vorhandene Seite mit `wiki_patch_page` erweitern, sonst `wiki_write_page` mit selbst gewähltem Pfad.
-4. `wiki_append_log` mit `operation: ingest`.
+1. `raw_list` / `raw_read` - read the source.
+2. `wiki_search` - does the page already exist?
+3. Extend an existing page with `wiki_patch_page`, otherwise `wiki_write_page` with a path you choose.
+4. `wiki_append_log` with `operation: ingest`.
 
-**Fragen (Query)**
+**Query**
 
-1. `wiki_search` - hybrid, danach gezielt lesen.
-2. Bei Lücken zuerst antworten, dann die Lücke als `draft`-Seite anlegen.
+1. `wiki_search` - hybrid, then read targeted pages.
+2. If there are gaps, answer first, then create the gap as a `draft` page.
 
-**Aufräumen (Lint)**
+**Lint**
 
-1. `wiki_lint` - Befunde abarbeiten.
-2. Doppelte Seiten zusammenführen, Verweise per `wiki_backlinks` prüfen, dann `wiki_move_page` oder `wiki_delete_page`.
-3. `wiki_update_index`, danach `wiki_append_log`.
+1. `wiki_lint` - work through the findings.
+2. Merge duplicate pages, check refs with `wiki_backlinks`, then `wiki_move_page` or `wiki_delete_page`.
+3. `wiki_update_index`, then `wiki_append_log`.
 
-## Schreibstil
+## Writing style
 
-- Deutsch, sachlich, ohne Füllwörter.
-- Eine Seite, ein Thema. Lieber verlinken als wiederholen.
-- Widersprüche nicht nebeneinander stehen lassen: auflösen oder als offene Frage kennzeichnen.
-- Quellen als `sources` im Frontmatter, nicht als Fußnote im Text.
+- English, factual, no filler.
+- One page, one topic. Prefer linking over repeating.
+- Do not leave contradictions side by side: resolve them or mark as an open question.
+- Cite sources as `sources` in frontmatter, not as footnotes in the text.

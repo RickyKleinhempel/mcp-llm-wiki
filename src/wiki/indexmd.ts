@@ -42,11 +42,11 @@ export async function updateIndex(
   const lines: string[] = [];
   lines.push(scope === "" ? "# Index" : `# Index: ${scope}`);
   lines.push("");
-  lines.push(`${listed.length} Seite(n), Stand ${todayIso()}.`);
+  lines.push(`${listed.length} page(s), as of ${todayIso()}.`);
   lines.push("");
 
   for (const folder of [...groups.keys()].sort()) {
-    lines.push(`## ${folder === "" ? "(Wurzel)" : folder}`);
+    lines.push(`## ${folder === "" ? "(root)" : folder}`);
     lines.push("");
     for (const page of groups.get(folder) ?? []) {
       const link = relativeLink(scope, page.relPath);
@@ -65,7 +65,7 @@ export async function updateIndex(
     {
       title: args.title ?? (scope === "" ? "Index" : `Index: ${scope}`),
       type: "index",
-      summary: scope === "" ? "Automatisch erzeugter Gesamtindex des Wikis." : `Index des Ordners ${scope}.`,
+      summary: scope === "" ? "Automatically generated full wiki index." : `Index of folder ${scope}.`,
       ...(scope === "" ? {} : { scope }),
     },
     {
