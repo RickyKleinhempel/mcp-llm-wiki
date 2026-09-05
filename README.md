@@ -22,11 +22,13 @@ decision - `wiki_write_page` therefore requires an explicit `path`.
 
 ## Installation
 
+No install needed if you start the server with `npx` (see Wiring). Otherwise:
+
 ```powershell
 npm install -g mcp-llm-wiki
 ```
 
-Or from a clone:
+From a clone:
 
 ```powershell
 cd mcp-llm-wiki
@@ -40,15 +42,15 @@ On first start Transformers.js downloads the model `Xenova/multilingual-e5-small
 
 ## Wiring
 
-`.vscode/mcp.json`:
+`.vscode/mcp.json` via `npx` (no global install):
 
 ```json
 {
   "servers": {
     "llm-wiki": {
       "type": "stdio",
-      "command": "node",
-      "args": ["${workspaceFolder}/mcp-llm-wiki/dist/index.js"],
+      "command": "npx",
+      "args": ["-y", "mcp-llm-wiki"],
       "env": {
         "WIKI_ROOT": "${workspaceFolder}/wiki",
         "RAW_ROOT": "${workspaceFolder}/raw"
@@ -58,8 +60,26 @@ On first start Transformers.js downloads the model `Xenova/multilingual-e5-small
 }
 ```
 
-Then copy `templates/AGENTS.md` to `wiki/AGENTS.md` and adapt it - that is where conventions
-live, not in the server configuration.
+After `npm install -g mcp-llm-wiki`:
+
+```json
+{
+  "servers": {
+    "llm-wiki": {
+      "type": "stdio",
+      "command": "mcp-llm-wiki",
+      "env": {
+        "WIKI_ROOT": "${workspaceFolder}/wiki",
+        "RAW_ROOT": "${workspaceFolder}/raw"
+      }
+    }
+  }
+}
+```
+
+From a clone, use `"command": "node"` and `"args": ["${workspaceFolder}/mcp-llm-wiki/dist/index.js"]`.
+
+Copy `templates/AGENTS.md` from the package to `wiki/AGENTS.md` and adapt it - conventions live there, not in the server config. After a global install the template is at `$(npm root -g)/mcp-llm-wiki/templates/AGENTS.md`.
 
 ## Configuration
 
