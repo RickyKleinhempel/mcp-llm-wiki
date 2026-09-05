@@ -162,14 +162,11 @@ CLI overrides environment overrides the default.
 
 ### Known vulnerabilities in dependencies
 
-`npm audit` reports four high-severity findings with no fix:
-
-- `adm-zip < 0.6.0` via `onnxruntime-node`
-- `sharp < 0.35.0` via `@huggingface/transformers`
-
-Neither path is exercised here: the server does not unpack untrusted archives and does not
-process images. If you disagree, you can skip vector search with `mode: "bm25"`; a replacement
-for the dependency is pending.
+`onnxruntime-node` 1.24 (pulled by `@huggingface/transformers`) still declares `adm-zip@0.5` and
+`global-agent@3` (`boolean`). `sharp` is declared `<0.35`. This package overrides those to patched
+releases (`adm-zip@0.6`, `global-agent@4`, `sharp@0.35`). None of those paths are exercised here:
+the server does not unpack untrusted archives and does not process images. If you disagree, skip
+vector search with `mode: "bm25"`.
 
 ## Tests
 
