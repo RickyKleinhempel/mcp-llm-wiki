@@ -23,6 +23,12 @@ decision - `wiki_write_page` therefore requires an explicit `path`.
 ## Installation
 
 ```powershell
+npm install -g mcp-llm-wiki
+```
+
+Or from a clone:
+
+```powershell
 cd mcp-llm-wiki
 npm install
 npm run build

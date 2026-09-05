@@ -1,12 +1,25 @@
 {
   "name": "mcp-llm-wiki",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
   "description": "MCP server for an LLM-owned wiki with hybrid BM25 + local CPU vector search",
+  "license": "MIT",
+  "author": "Ricky Kleinhempel",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RickyKleinhempel/mcp-llm-wiki.git"
+  },
+  "bugs": {
+    "url": "https://github.com/RickyKleinhempel/mcp-llm-wiki/issues"
+  },
+  "homepage": "https://github.com/RickyKleinhempel/mcp-llm-wiki#readme",
   "bin": {
     "mcp-llm-wiki": "dist/index.js"
   },
+  "files": [
+    "dist",
+    "templates"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "watch": "tsc -p tsconfig.json --watch",
@@ -14,7 +27,8 @@
     "test": "node test/unit.mjs && node test/smoke.mjs",
     "test:unit": "node test/unit.mjs",
     "test:stdio": "node test/stdio.mjs",
-    "inspect": "npx @modelcontextprotocol/inspector node dist/index.js"
+    "inspect": "npx @modelcontextprotocol/inspector node dist/index.js",
+    "prepublishOnly": "npm run build"
   },
   "engines": {
     "node": ">=20.10.0"
